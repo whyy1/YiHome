@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "./proto;user";
+
+service User {
+	rpc SendSms(Request) returns (Response) {};
+	rpc Register(RegReq)returns (Response){};
+	rpc UploadAvatar(UploadReq) returns (Response) {};
+	rpc AuthUpdate(AuthReq) returns (Response);
+}
+//发送信息请求参数
+message Request {
+	string phone = 1;
+	string imgCode=2;
+	string uuid=3;
+}
+//注册用户请求参数
+message RegReq {
+	string mobile = 1;
+	string password=2;
+	string sms_code=3;
+}
+//上传头像函数
+message UploadReq{
+	string userName=1;
+	string avatar_url=2;
+}
+message AuthReq{
+	string id_card=1;
+	string real_name=2;
+	string userName=3;
+	string id_address=4;
+}
+message Response {
+	string errno = 1;
+	string errmsg=2;
+}

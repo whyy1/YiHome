@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:5.7
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - ~/volumes/mysql/conf/my.cnf:/etc/mysql/my.cnf
+      - ~/volumes/mysql/mysql-files:/var/lib/mysql-files
+      - ~/volumes/mysql/log:/logs
+      - ~/volumes/mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_USER: douyin
+      MYSQL_PASSWORD: yihome
+      MYSQL_DATABASE: douyin
+      MYSQL_ROOT_PASSWORD: douyin
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    container_name: 'mysql'
+  redis:
+    image: redis:latest
+    environment:
+      - TZ=Asia/Shanghai
+    ports: #将容器端口暴露
+      - "6379:6379"
+    command:
+      - `-d redis redis-server /etc/redis/redis.conf --appendonly yes`
+    volumes:
+      - ~/volumes/redis/conf:/etc/redis/redis.conf
+      - ~/volumes/redis/data:/data
+    container_name: 'redis'
+
+  consul:
+    image: consul:latest
+    network_mode: host #使用宿主的网络和端口
+    command: `agent -server -bootstrap -ui -node=1 -client='0.0.0.0' -bind='172.29.251.146'`
+    container_name: 'consul'
+
+  user:
+    image: registry.cn-heyuan.aliyuncs.com/whyy1/yihome:user-v2
+    network_mode: host
+    volumes:
+      - ~/conf/:/conf
+    container_name: user
+
+  getCaptcha:
+    image: registry.cn-heyuan.aliyuncs.com/whyy1/service:v1
+    network_mode: host
+    volumes:
+      - ~/conf/:/conf
+    container_name: getCaptcha
