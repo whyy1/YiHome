@@ -14,10 +14,11 @@ import (
 func main() {
 	setupLogs()
 	router := setupRouter()
-
 	model.SetupRedis()
 	model.SetupMysql()
-	if err := router.Run(); err != nil {
+	if err := router.RunTLS(":8080", "./conf/cert.crt", "./conf/cert.key"); err != nil {
+		//if err := router.RunTLS(":443", "../../ssl/cert.crt", "../../ssl/cert.key"); err != nil {
+		//if err := router.Run(":8080"); err != nil {
 		log.Println("gin框架运行失败，err为：", err)
 		return
 	}
