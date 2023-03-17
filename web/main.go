@@ -51,31 +51,44 @@ func setupRouter() *gin.Engine {
 
 		r1.Use(LoginFilter()) //使用中间件检查session是否存在，不存在直接返回
 
+		//删除session
 		r1.DELETE("session", controller.DeleteSessino)
+		//获取用户信息
 		r1.GET("user", controller.GetUserInfo)
-		r1.PUT("user/name", controller.PutUserInfo)
+		//上传用户头像
 		r1.POST("user/avatar", controller.PostAvatar)
-		//实名认证相关服务
+		//修改用户名称
+		r1.PUT("user/name", controller.PutUserInfo)
+
+		//获取实名认证信息
 		r1.GET("user/auth", controller.GetAuth)
+		//上传实名认证信息
 		r1.POST("user/auth", controller.PostAuth)
 
+		//获取网站首页图和连接
 		r1.GET("house/index", controller.GetIndex)
 		//搜索发布的房屋信息
 		r1.GET("houses", controller.GetHouses)
+		r1.GET("user/houses", controller.GetUserHouses)
 		//获取房屋的详细信息
 		r1.GET("houses/:id", controller.GetHousesInfo)
-		//获取用户发布的房屋信息
-		r1.GET("user/houses", controller.GetUserHouses)
 		//上传房源信息
 		r1.POST("houses", controller.PostHouses)
 		//上传房屋图片
 		r1.POST("houses/:id/images", controller.PostHousesImage)
+		//修改房屋的详细信息
+		r1.PUT("houses/:id", controller.PutHousesInfo)
+		//删除房屋的详细信息
+		r1.DELETE("houses/:id", controller.DeleteHousesInfo)
+		//获取用户发布的房屋信息
 
 		//获取订单
 		r1.GET("user/orders", controller.GetOrders)
 		//客户预订房屋订单
 		r1.POST("orders", controller.PostOrders)
+		//房东修改订单状态
 		r1.PUT("orders/:id/status", controller.PutOrders)
+		//租客提交订单评论
 		r1.PUT("orders/:id/comment", controller.PutOrdersComment)
 
 	}

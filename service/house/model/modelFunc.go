@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/go-sql-driver/mysql"
@@ -65,7 +66,7 @@ func AddHouse(request *house.Request) (int, error) {
 		if ok {
 			houseInfo.Facilities = append(houseInfo.Facilities, &v)
 		} else {
-			fmt.Println("查询不到家具id")
+			log.Println("查询不到家具id")
 		}
 		//查询到了数据
 		//houseInfo.Facilities = append(houseInfo.Facilities, &fac)
@@ -78,6 +79,144 @@ func AddHouse(request *house.Request) (int, error) {
 	}
 	fmt.Println("插入房屋信息成功")
 	return int(houseInfo.ID), nil
+}
+func UpdateHouse(request *house.UpdateResq) error {
+	var houseInfo House
+	//给house赋值
+	houseInfo.Address = request.Address
+
+	//根据userName获取userId
+	var user User
+	if err := GlobalDB.Debug().Where("name = ?", request.UserName).Find(&user).Error; err != nil {
+		fmt.Println("查询当前用户失败", err)
+		return err
+	}
+	//sql中一对多插入,只是给外键赋值
+	houseInfo.UserId = uint(user.ID)
+	houseInfo.Title = request.Title
+	//类型转换
+	price, _ := strconv.Atoi(request.Price)
+	roomCount, _ := strconv.Atoi(request.RoomCount)
+	houseInfo.Price = price
+	houseInfo.Room_count = roomCount
+	houseInfo.Unit = request.Unit
+	houseInfo.Capacity, _ = strconv.Atoi(request.Capacity)
+	houseInfo.Beds = request.Beds
+	houseInfo.Deposit, _ = strconv.Atoi(request.Deposit)
+	houseInfo.Min_days, _ = strconv.Atoi(request.MinDays)
+	houseInfo.Max_days, _ = strconv.Atoi(request.MaxDays)
+	houseInfo.Acreage, _ = strconv.Atoi(request.MaxDays)
+	//一对多插入
+	areaId, _ := strconv.Atoi(request.AreaId)
+	houseInfo.AreaId = uint(areaId)
+
+	//校验家具id是否存在
+	facilityMap := make(map[int]Facility)
+	var facility []Facility
+	GlobalDB.Debug().Find(&facility)
+	fmt.Println("获取到的所有家具", facility)
+	for _, v := range facility {
+		facilityMap[v.Id] = v
+	}
+	fmt.Println("map中的值", facilityMap)
+
+	var hou_fac []int
+	h_id, _ := strconv.Atoi(request.HouseId)
+	//request.Facility    所有的家具  房屋
+	for _, v := range request.Facility {
+		id, _ := strconv.Atoi(v)
+		_, ok := facilityMap[id]
+		if ok {
+			hou_fac = append(hou_fac, id)
+			fmt.Println("家具参数id", id)
+		} else {
+			fmt.Println("查询不到家具id")
+		}
+	}
+	fmt.Println("hou_fac", hou_fac)
+
+	GlobalDB.Transaction(func(tx *gorm.DB) error {
+		// 在事务中执行一些 db 操作（从这里开始，您应该使用 'tx' 而不是 'db'）
+		if err := tx.Debug().Where("house_id = ?", request.HouseId).Delete(&HouseFacilities{}).Error; err != nil {
+			log.Println("删除房屋设施表失败", err)
+			return err
+		}
+		for _, v := range hou_fac {
+			fmt.Println("插入ID", v)
+			//增加房源_设施表数据
+			if err := tx.Debug().Create(&HouseFacilities{HouseId: h_id, FacilityId: v}).Error; err != nil {
+				fmt.Println("插入房屋信息失败", err)
+				return err
+			}
+		}
+
+		//修改房源信息
+		if err := GlobalDB.Debug().Table("house").Where("id = ?", request.HouseId).Updates(House{
+			AreaId:      houseInfo.AreaId,
+			Title:       houseInfo.Title,
+			Address:     houseInfo.Address,
+			Room_count:  houseInfo.Room_count,
+			Acreage:     houseInfo.Acreage,
+			Price:       houseInfo.Price,
+			Unit:        houseInfo.Unit,
+			Capacity:    houseInfo.Capacity,
+			Beds:        houseInfo.Beds,
+			Deposit:     houseInfo.Deposit,
+			Min_days:    houseInfo.Min_days,
+			Max_days:    houseInfo.Max_days,
+			Order_count: houseInfo.Order_count,
+			Orders:      houseInfo.Orders,
+		}).Error; err != nil {
+			log.Println("插入房屋信息失败", err)
+			return err
+		}
+		// 返回 nil 提交事务
+		return nil
+	})
+
+	log.Println("修改房屋信息成功")
+	return nil
+}
+func DeleteHouse(request *house.DeleteResq) error {
+
+	return GlobalDB.Transaction(func(tx *gorm.DB) error {
+		// 在事务中做一些数据库操作 (这里应该使用 'tx' ，而不是 'db')
+		user := User{}
+		if err := tx.Where("name=?", request.UserName).Find(&user).Error; err != nil {
+			log.Println("查询用户信息失败，删除操作取消，err为：", err)
+			return err
+		}
+		houseInfo := House{}
+		if err := tx.Where("id=?", request.HouseId).Find(&houseInfo).Error; err != nil {
+			log.Println("查询房源信息失败，删除操作取消，err为：", err)
+			return err
+		}
+		userId := uint(user.ID)
+		fmt.Println(user.ID, houseInfo.UserId)
+		if userId != houseInfo.UserId {
+			log.Println("房东和删除者不一致，删除操作取消")
+			return errors.New("房东和删除者不一致")
+		} else {
+			if err := tx.Debug().Delete(&houseInfo).Error; err != nil {
+				log.Println("进行删除操作过程失败，删除houseInfo错误，err为：", err)
+				return err
+			}
+			if err := tx.Debug().Where("house_id=?", request.HouseId).Delete(&HouseImage{}).Error; err != nil {
+				log.Println("进行删除操作过程失败，删除HouseImage错误，err为：", err)
+				return err
+			}
+			if err := tx.Debug().Where("house_id=?", request.HouseId).Delete(&HouseFacilities{}).Error; err != nil {
+				log.Println("进行删除操作过程失败，删除houseInfo错误，err为：", err)
+				return err
+			}
+			//if err := tx.Debug().Where("house_id=?", request.HouseId).Delete(&OrderHouse{}).Error; err != nil {
+			//	log.Println("进行删除操作过程失败，删除houseInfo错误，err为：", err)
+			//	return err
+			//}
+		}
+		// 返回 nil ，事务会 commit
+		return nil
+	})
 }
 func SaveHouseImg(houseId, imgUrl string) error {
 	var houseInfo House
@@ -111,7 +250,7 @@ func GetUserHouse(userName string) ([]*house.Houses, error) {
 
 	//房源信息   一对多查询
 	var houses []House
-	if err := GlobalDB.Debug().Model(&user).Related(&houses).Error; err != nil {
+	if err := GlobalDB.Model(&user).Related(&houses).Error; err != nil {
 		fmt.Println("联合查询错误错误", err)
 	}
 
@@ -276,13 +415,67 @@ func SearchHouse(areaId, sd, ed, sk string) ([]*house.Houses, error) {
 	edTime, _ := time.Parse("2006-01-02", ed)
 	dur := edTime.Sub(sdTime)
 
-	err := GlobalDB.Debug().Where("area_id = ?", areaId).
-		Where("min_days <= ?", dur.Hours()/24).
-		Where("max_days >= ? or max_days =0 ", dur.Hours()/24).
-		Order("created_at desc").Find(&houseInfos).Error
-	if err != nil {
-		fmt.Println("搜索房屋失败", err)
-		return nil, err
+	switch sk {
+	case "new":
+		{
+			err := GlobalDB.Debug().Where("area_id = ?", areaId).
+				Where("min_days <= ?", dur.Hours()/24).
+				Where("max_days >= ? or max_days =0 ", dur.Hours()/24).
+				Order("created_at desc").Find(&houseInfos).Error
+			if err != nil {
+				fmt.Println("搜索房屋失败", err)
+				return nil, err
+			}
+		}
+	case "booking":
+		var house_ids []int
+		//获取出租订单次数从高到低的house_id列表
+		err1 := GlobalDB.Debug().Select("house_id").
+			Table("order_house").
+			Group("house_id").
+			Order("COUNT(*) desc").
+			Pluck("house_id", &house_ids).
+			Find(&OrderHouse{}).Error
+		if err1 != nil {
+			log.Println("错误为", err1)
+		}
+		//按照house_id查询房源信息表
+		err := GlobalDB.Debug().Where("area_id = ?", areaId).
+			Where("min_days <= ?", dur.Hours()/24).
+			Where("max_days >= ? or max_days =0 ", dur.Hours()/24).
+			Where("id IN (?)", house_ids).
+			Find(&houseInfos).Error
+		if err != nil {
+			fmt.Println("搜索房屋失败", err)
+			return nil, err
+		}
+	case "price-inc":
+		err := GlobalDB.Debug().Where("area_id = ?", areaId).
+			Where("min_days <= ?", dur.Hours()/24).
+			Where("max_days >= ? or max_days =0 ", dur.Hours()/24).
+			Order("price").Find(&houseInfos).Error
+		if err != nil {
+			fmt.Println("搜索房屋失败", err)
+			return nil, err
+		}
+	case "price-des":
+		err := GlobalDB.Debug().Where("area_id = ?", areaId).
+			Where("min_days <= ?", dur.Hours()/24).
+			Where("max_days >= ? or max_days =0 ", dur.Hours()/24).
+			Order("price desc").Find(&houseInfos).Error
+		if err != nil {
+			fmt.Println("搜索房屋失败", err)
+			return nil, err
+		}
+	default:
+		err := GlobalDB.Debug().Where("area_id = ?", areaId).
+			Where("min_days <= ?", dur.Hours()/24).
+			Where("max_days >= ? or max_days =0 ", dur.Hours()/24).
+			Order("created_at desc").Find(&houseInfos).Error
+		if err != nil {
+			fmt.Println("搜索房屋失败", err)
+			return nil, err
+		}
 	}
 
 	//获取[]*house.Houses

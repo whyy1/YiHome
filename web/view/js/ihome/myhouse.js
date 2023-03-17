@@ -20,4 +20,37 @@ $(document).ready(function(){
             });
         }
     });
+    
 })
+
+function updateHouse(url,args) {
+    console.log(args);
+    location.href=url;
+    event.stopPropagation( )
+}
+function del(e,id) {
+    console.log(1);
+    e.stopPropagation(); 
+    console.log(id);
+    if (confirm("确认要删除吗？")) {
+        $.ajax({
+        url: '/api/v1.0/houses/' + id,
+        method: 'DELETE',
+        success: function(resp) {
+            if ("4101" == resp.errno) {
+                location.href = "/home/login.html";
+            } else if ("0" == resp.errno) {
+                // 删除成功后的处理
+                alert('删除成功！');
+                location.reload(); // 刷新页面
+            } else {
+                alert(resp.errmsg);
+            }
+        },
+        error: function(xhr, status, error) {
+            // 删除失败后的处理
+            alert('删除失败：' + error);
+        }
+        });
+    }
+}

@@ -134,13 +134,12 @@ func UpdateStatus(action, id, reason string) error {
 		return db.Updates(map[string]interface{}{"status": "REJECTED", "comment": reason}).Error
 	}
 }
-func UpdateComment( id, comment string) error {
+func UpdateComment(id, comment string) error {
 
 	db := GlobalDB.Debug().Model(new(OrderHouse)).Where("id = ?", id)
 
 	return db.Debug().Updates(map[string]interface{}{"status": "COMPLETE", "comment": comment}).Error
 }
-
 
 func InitMysql() {
 	config, err := conf.LoadConfig("./conf/")

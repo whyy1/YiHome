@@ -13,6 +13,10 @@
     <link href="./css/ihome/booking.css" rel="stylesheet">
 </head>
 <body>
+    <!-- 加载动画，默认隐藏，有网络请求时显示 -->
+    <div id="loading" style="display:none;">
+        <img src="./images/loading.png" width="40px" height="40px" alt="">
+    </div>
     <div class="container">
         <div class="top-bar">
             <div class="nav-bar">
@@ -23,8 +27,8 @@
         <div class="house-info">
             <img src="./images/home01.jpg">
             <div class="house-text">
-                <h3>房屋标题</h3>
-                <p>￥<span>300</span>/晚</p>
+                <h3></h3>
+                <p>￥<span></span>/晚</p>
             </div>
         </div>
         <div class="select-date">
@@ -46,7 +50,7 @@
         </div>
         <div class="mask"></div>
     </div>
-    
+
     <script src="./js/jquery.min.js"></script>
     <script src="./plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="./plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>

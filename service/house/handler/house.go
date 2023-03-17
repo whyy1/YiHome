@@ -110,3 +110,29 @@ func (e *House) SearchHouse(ctx context.Context, req *pb.SearchReq, resp *pb.Get
 	resp.Data = &pb.GetData{Houses: houseResp}
 	return nil
 }
+
+func (e *House) UpdateHouse(ctx context.Context, req *pb.UpdateResq, resp *pb.UpdateResp) error {
+	//修改房源信息
+	if err := model.UpdateHouse(req); err != nil {
+		resp.Errno = utils.RECODE_DATAERR
+		resp.Errmsg = utils.RecodeText("数据库修改数据时错误")
+		return nil
+	}
+
+	resp.Errno = utils.RECODE_OK
+	resp.Errmsg = utils.RecodeText(utils.RECODE_OK)
+	return nil
+}
+
+func (e *House) DeleteHouse(ctx context.Context, req *pb.DeleteResq, resp *pb.DeleteResp) error {
+	//修改房源信息
+	if err := model.DeleteHouse(req); err != nil {
+		resp.Errno = utils.RECODE_DATAERR
+		resp.Errmsg = utils.RecodeText("数据库修改数据时错误")
+		return nil
+	}
+
+	resp.Errno = utils.RECODE_OK
+	resp.Errmsg = utils.RecodeText(utils.RECODE_OK)
+	return nil
+}

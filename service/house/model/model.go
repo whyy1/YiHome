@@ -77,3 +77,7 @@ type OrderHouse struct {
 	Comment     string    `gorm:"size:512"`              //订单评论
 	Credit      bool      //表示个人征信情况 true表示良好
 }
+type HouseFacilities struct {
+	HouseId    int `gorm:"type:bigint"` //图片id
+	FacilityId int //图片所属房屋编号
+}

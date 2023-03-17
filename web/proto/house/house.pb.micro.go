@@ -42,6 +42,8 @@ type HouseService interface {
 	GetHouseDetail(ctx context.Context, in *DetailReq, opts ...client.CallOption) (*DetailResp, error)
 	GetIndexHouse(ctx context.Context, in *IndexReq, opts ...client.CallOption) (*GetResp, error)
 	SearchHouse(ctx context.Context, in *SearchReq, opts ...client.CallOption) (*GetResp, error)
+	UpdateHouse(ctx context.Context, in *UpdateResq, opts ...client.CallOption) (*UpdateResp, error)
+	DeleteHouse(ctx context.Context, in *DeleteResq, opts ...client.CallOption) (*DeleteResp, error)
 }
 
 type houseService struct {
@@ -116,6 +118,26 @@ func (c *houseService) SearchHouse(ctx context.Context, in *SearchReq, opts ...c
 	return out, nil
 }
 
+func (c *houseService) UpdateHouse(ctx context.Context, in *UpdateResq, opts ...client.CallOption) (*UpdateResp, error) {
+	req := c.c.NewRequest(c.name, "House.UpdateHouse", in)
+	out := new(UpdateResp)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *houseService) DeleteHouse(ctx context.Context, in *DeleteResq, opts ...client.CallOption) (*DeleteResp, error) {
+	req := c.c.NewRequest(c.name, "House.DeleteHouse", in)
+	out := new(DeleteResp)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for House service
 
 type HouseHandler interface {
@@ -125,6 +147,8 @@ type HouseHandler interface {
 	GetHouseDetail(context.Context, *DetailReq, *DetailResp) error
 	GetIndexHouse(context.Context, *IndexReq, *GetResp) error
 	SearchHouse(context.Context, *SearchReq, *GetResp) error
+	UpdateHouse(context.Context, *UpdateResq, *UpdateResp) error
+	DeleteHouse(context.Context, *DeleteResq, *DeleteResp) error
 }
 
 func RegisterHouseHandler(s server.Server, hdlr HouseHandler, opts ...server.HandlerOption) error {
@@ -135,6 +159,8 @@ func RegisterHouseHandler(s server.Server, hdlr HouseHandler, opts ...server.Han
 		GetHouseDetail(ctx context.Context, in *DetailReq, out *DetailResp) error
 		GetIndexHouse(ctx context.Context, in *IndexReq, out *GetResp) error
 		SearchHouse(ctx context.Context, in *SearchReq, out *GetResp) error
+		UpdateHouse(ctx context.Context, in *UpdateResq, out *UpdateResp) error
+		DeleteHouse(ctx context.Context, in *DeleteResq, out *DeleteResp) error
 	}
 	type House struct {
 		house
@@ -169,4 +195,12 @@ func (h *houseHandler) GetIndexHouse(ctx context.Context, in *IndexReq, out *Get
 
 func (h *houseHandler) SearchHouse(ctx context.Context, in *SearchReq, out *GetResp) error {
 	return h.HouseHandler.SearchHouse(ctx, in, out)
+}
+
+func (h *houseHandler) UpdateHouse(ctx context.Context, in *UpdateResq, out *UpdateResp) error {
+	return h.HouseHandler.UpdateHouse(ctx, in, out)
+}
+
+func (h *houseHandler) DeleteHouse(ctx context.Context, in *DeleteResq, out *DeleteResp) error {
+	return h.HouseHandler.DeleteHouse(ctx, in, out)
 }

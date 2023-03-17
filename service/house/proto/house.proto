@@ -11,6 +11,8 @@ service House {
 	rpc GetHouseDetail(DetailReq)returns(DetailResp){};
 	rpc GetIndexHouse(IndexReq)returns(GetResp){};
 	rpc SearchHouse(SearchReq)returns(GetResp){};
+	rpc UpdateHouse(UpdateResq)returns(UpdateResp){};
+	rpc DeleteHouse(DeleteResq)returns(DeleteResp){};
 }
 
 message SearchReq{
@@ -138,4 +140,33 @@ message Response {
 
 message HouseData{
 	string house_id = 1;
+}
+message UpdateResq{
+	string acreage = 1;
+	string address = 2;
+	string area_id = 3;
+	string beds = 4;
+	string capacity = 5;
+	string deposit = 6;
+	repeated string facility = 7;
+	string max_days = 8;
+	string min_days = 9;
+	string price = 10;
+	string room_count = 11;
+	string title = 12;
+	string unit = 13;
+	string userName = 14;
+	string house_id=15;
+}
+message UpdateResp{
+	string errno = 1;
+	string errmsg = 2;
+}
+message DeleteResq{
+	string house_id = 1;
+	string userName = 2;
+}
+message DeleteResp{
+	string errno = 1;
+	string errmsg = 2;
 }

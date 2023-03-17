@@ -122,6 +122,69 @@ func GetHousesInfo(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 
 }
+func PutHousesInfo(ctx *gin.Context) {
+	var house HouseStu
+	house_id := ctx.Param("id")
+	//校验数据
+	if house_id == "" {
+		resp := Response{
+			Errno:  utils.RECODE_DATAERR,
+			Errmsg: "获取不到房屋ID",
+		}
+		ctx.JSON(http.StatusOK, resp)
+		return
+	}
+
+	if err := ctx.Bind(&house); err != nil {
+		log.Println("loginData参数解析错误，err为：", err)
+		ctx.JSON(http.StatusInternalServerError, fmt.Sprint("参数解析错误，", err))
+		return
+	}
+	fmt.Println(house)
+
+	userName := sessions.Default(ctx).Get("userName")
+	fmt.Println(userName)
+	//创建微服务进行update操作
+	microClient := houseMicro.NewHouseService("house", utils.NewMicroClient().Client())
+	var resp, err = microClient.UpdateHouse(context.TODO(), &houseMicro.UpdateResq{
+		Acreage:   house.Acreage,
+		Address:   house.Address,
+		AreaId:    house.AreaId,
+		Beds:      house.Beds,
+		Capacity:  house.Capacity,
+		Deposit:   house.Deposit,
+		Facility:  house.Facility,
+		MaxDays:   house.MaxDays,
+		MinDays:   house.MinDays,
+		Price:     house.Price,
+		RoomCount: house.RoomCount,
+		Title:     house.Title,
+		Unit:      house.Unit,
+		UserName:  userName.(string),
+		HouseId:   house_id,
+	})
+
+	if err != nil {
+		log.Println("调用微服务House中UpdateHouse出现错误，err为：", err)
+	}
+	//返回数据
+	ctx.JSON(http.StatusOK, resp)
+}
+func DeleteHousesInfo(ctx *gin.Context) {
+	house_id := ctx.Param("id")
+	userName := sessions.Default(ctx).Get("userName")
+	fmt.Println(house_id, userName)
+	microClient := houseMicro.NewHouseService("house", utils.NewMicroClient().Client())
+	var resp, err = microClient.DeleteHouse(context.TODO(), &houseMicro.DeleteResq{
+		HouseId:  house_id,
+		UserName: userName.(string),
+	})
+	if err != nil {
+		log.Println("调用微服务House中UpdateHouse出现错误，err为：", err)
+	}
+	//返回数据
+	ctx.JSON(http.StatusOK, resp)
+}
 func GetHouses(ctx *gin.Context) {
 	//获取数据
 	//areaId
