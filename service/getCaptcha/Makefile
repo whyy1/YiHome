@@ -28,4 +28,4 @@ test:
 
 .PHONY: docker
 docker:
-	@docker build -t getCaptcha:latest .
+	@docker build -t getcaptcha:latest .
